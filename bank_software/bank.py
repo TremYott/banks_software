@@ -5,6 +5,7 @@ import dataclasses
 from singleton_decorator import singleton
 
 from .errors import *
+from .transaction import Transaction
 from .user import User
 
 
@@ -14,6 +15,8 @@ class Bank:
 
     users: typing.Dict[uuid.UUID, User]
     user_mapping: typing.Dict[int, uuid.UUID]
+
+    transactions: typing.Dict[uuid.UUID, Transaction]
 
     def create_user(self, user: User) -> User:
         if hash(user) in self.user_mapping:
@@ -38,6 +41,16 @@ class Bank:
             raise UserNotFound
 
         return self.users[self.user_mapping[hash(user)]]
+
+    def add_transaction(self, transaction: Transaction):
+        if transaction.id in self.transactions:
+            raise TransactionAlreadyExists
+        self.transactions[transaction.id] = transaction
+
+    def withdraw_transaction(self, transaction: Transaction):
+        if transaction.id not in self.transactions:
+            raise TransactionAlreadyExists  # todo: change error
+        self.transactions.pop(transaction.id)
 
 
 @dataclasses.dataclass
