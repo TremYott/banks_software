@@ -1,7 +1,6 @@
 from bank_software.Time import Time
 from bank_software.bank import Bank
 from bank_software.terms import Terms
-from bank_software.transaction import Transaction
 from bank_software.user import User
 
 
@@ -16,19 +15,21 @@ class Account:
         self.bank = bank
 
     def check_sus_status(self):
-        if self.user.address & self.user.passport:
+        if self.user.address and self.user.passport:
             self.sus_status = True
 
+    # зачисление средств
     def topUp(self, cash):
-        self.amount += self.bank.Transaction_topUp(cash)
+        assert cash > 0
+        self.amount += self.bank.process_funds(cash, self)
         # self.amount+=cash
 
     def withdraw(self, cash):
         if self.sus_status or cash < self.terms.restrictions:
-            if self.bank.withdraw_transaction(cash) > self.amount:
+            if self.bank.process_funds(cash, self) > self.amount:
                 print("Ошибка. Недостаточно средств")
             else:
-                self.amount -= self.bank.withdraw_transaction(cash)
+                self.amount -= self.bank.process_funds(cash, self)
         else:
             print("Ошибка. Заполните свои паспортные данные и/или адрес")
 
@@ -59,11 +60,11 @@ class DepositAccount(Account):
             self.percents = 4
 
     def withdraw(self, cash):
-        if Time.now() - self.duration >= open_time:
-            if self.bank.withdraw_transaction(cash) > self.amount:
+        if Time.now() - self.duration >= self.open_time:
+            if self.bank.process_funds(cash, self) > self.amount:
                 print("Ошибка. Недостаточно средств.")
             else:
-                self.amount -= self.bank.withdraw_transaction(cash)
+                self.amount -= self.bank.process_funds(cash, self)
         else:
             print("Ошибка. Окончание времени депозита не наступило.")
 
@@ -73,19 +74,17 @@ class CreditAccount(Account):
         super().__init__(ident, bank, user, terms)
         self.limit = limit  # должен быть отрицательным
 
-    # снятие
+    # снятие комиссии
     def withdraw_comission(self):
-        transaction = Transaction(amount=self.terms.commission, fromAcc=self, id="123")  # todo: add bank account
-        self.amount -= self.bank.withdraw_transaction(transaction)
+        self.amount -= self.bank.process_funds(self.terms.commission, self)
 
     # снятие средств со счета
     def withdraw(self, cash):
-        transaction = Transaction(amount=cash, fromAcc=self, id="123")
         if self.amount - cash < self.limit:
             print("Ошибка. Превышен лимит")
             return
         elif self.amount - cash < 0:
             self.amount -= cash
             self.withdraw_comission()
-        self.bank.withdraw_transaction(transaction)
+        self.bank.process_funds(self.terms.commission, self)
 
