@@ -1,11 +1,9 @@
-import datetime
-import sched
-import Time
+from .Time import Time
 import sys
-import Account
-import DebtAccount # вклад
-import CreditAccount #  кредит
-import DebositAccount 
+from .Account import Account
+from .Account import CreditAccount
+from .Account import DebtAccount
+from .Account import DepositAccount
 
 
 class BankTasks:
