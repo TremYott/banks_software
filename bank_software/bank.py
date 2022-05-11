@@ -48,9 +48,10 @@ class Bank:
         self.transactions[transaction.id] = transaction
 
     def withdraw_transaction(self, transaction: Transaction):
-        if transaction.id not in self.transactions:
-            raise TransactionAlreadyExists  # todo: change error
-        self.transactions.pop(transaction.id)
+        # if transaction.id not in self.transactions:
+        #     raise TransactionAlreadyExists  # todo: change error
+        # self.transactions.pop(transaction.id)
+        self.add_transaction(transaction)
 
 
 @dataclasses.dataclass
